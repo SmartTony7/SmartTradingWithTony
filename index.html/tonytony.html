@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Trading With Tony</title>
+  <style>
+    :root{
+      --nav-height:100px;
+      --bg-dark:#0a0a0f;
+      --accent-cyan:#00e6ff;
+      --accent-purple:#6f00ff;
+      --overlay: rgba(0,0,0,0.56);
+      --glass: rgba(255,255,255,0.03);
+      --text: rgba(255,255,255,0.96);
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:var(--text);
+      background: #000;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Vanta background */
+    #vanta-bg{
+      position:fixed; inset:0; z-index:0; width:100%; height:100%;
+    }
+    /* dark overlay so text is readable */
+    .overlay{ position:fixed; inset:0; background:var(--overlay); z-index:1; }
+
+    /* NAVBAR */
+    header{
+      position:fixed; top:0; left:0; width:100%; height:var(--nav-height);
+      background: var(--bg-dark); z-index:8;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.6);
+      border-bottom:1px solid rgba(255,255,255,0.03);
+    }
+    .nav-inner{
+      width:100%; max-width:1200px; display:flex; align-items:center;
+      justify-content:space-between; padding:8px 22px;
+    }
+
+    /* Centered logo + brand (logo sits visually inside nav, but not covering content) */
+    .brand{
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      pointer-events:none; text-align:center;
+    }
+    .brand img{
+      width:180px; height:180px; object-fit:cover; border-radius:50%;
+      transform: translateY(-30px); /* visually lifted */
+      box-shadow: 0 18px 50px rgba(0,230,255,0.08);
+      border: 2px solid rgba(255,255,255,0.03);
+      z-index:9;
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+    }
+    .brand h1{
+      margin-top:-8px; font-size:18px; font-weight:800; color:var(--accent-cyan);
+      pointer-events:auto;
+      text-shadow: 0 6px 26px rgba(0,230,255,0.06);
+    }
+
+    /* Nav links area on right */
+    .nav-links{
+      display:flex; gap:20px; align-items:center;
+    }
+    .nav-links a{
+      color: rgba(255,255,255,0.9); text-decoration:none; font-weight:600;
+      padding:8px 10px; border-radius:8px; transition: all .2s ease;
+    }
+    .nav-links a:hover{
+      color:#fff; transform:translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,230,255,0.05);
+    }
+    .nav-cta a{
+      display:inline-block; padding:10px 18px; border-radius:999px;
+      background: linear-gradient(90deg,var(--accent-purple),var(--accent-cyan));
+      color:#04111a; font-weight:800; text-decoration:none;
+      box-shadow: 0 14px 50px rgba(0,230,255,0.10);
+      transition: transform .18s ease;
+    }
+    .nav-cta a:hover{ transform:translateY(-4px); box-shadow:0 22px 90px rgba(0,230,255,0.14); }
+
+    /* ensure header doesn't cover content */
+    main{ padding-top: calc(var(--nav-height) + 18px); position:relative; z-index:5; }
+
+    /* HERO */
+    .hero-wrap{ position:relative; min-height:calc(100vh - 14px); display:flex; align-items:center; justify-content:center; }
+    .hero-overlay{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(2,8,20,0.3), rgba(3,9,25,0.35)); z-index:2; pointer-events:none; }
+    .hero{ position:relative; z-index:6; text-align:center; padding:20px 18px; max-width:1000px; width:100%; }
+
+    .hero h2{
+      font-size: clamp(1.9rem, 4vw, 3.6rem); line-height:1.03; margin-bottom:14px; font-weight:800;
+      background: linear-gradient(90deg,var(--accent-purple),var(--accent-cyan));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      filter: drop-shadow(0 14px 36px rgba(0,230,255,0.06));
+    }
+    .hero p{ color: rgba(255,255,255,0.95); font-size:1.05rem; margin-bottom:22px; text-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+
+    .cta-row{ display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap; }
+    .btn-primary{
+      background: linear-gradient(90deg,var(--accent-purple),var(--accent-cyan)); color:#04111a;
+      padding:14px 26px; border-radius:999px; font-weight:800; text-decoration:none; display:inline-flex;
+      align-items:center; gap:10px; box-shadow: 0 14px 50px rgba(0,230,255,0.12);
+    }
+    .btn-secondary{ background: transparent; border:1px solid rgba(255,255,255,0.08); color:var(--text); padding:12px 20px; border-radius:999px; }
+
+    /* content blocks */
+    section.content-block{
+      margin:48px auto; max-width:1100px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px; padding:34px; box-shadow: 0 10px 40px rgba(3,10,20,0.45); backdrop-filter: blur(6px);
+      position:relative; z-index:5; border:1px solid rgba(0,230,255,0.04);
+    }
+    section.content-block h3{ font-size:1.6rem; color:var(--accent-cyan); margin-bottom:10px; font-weight:800; }
+    section.content-block p{ color: rgba(255,255,255,0.94); line-height:1.6; }
+
+    .cards{ display:grid; grid-template-columns: repeat(3,1fr); gap:18px; margin-top:16px; }
+    .card{ background:var(--glass); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); }
+
+    /* contact and footer */
+    .contact-grid{ display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:14px;}
+    .contact-card{ background: rgba(255,255,255,0.03); padding:12px 16px; border-radius:12px; min-width:220px; text-align:left; border:1px solid rgba(255,255,255,0.03); }
+    .contact-card a{ color:var(--accent-cyan); font-weight:700; text-decoration:none; }
+
+    footer{ margin-top:34px; text-align:center; padding:22px 18px; color:rgba(255,255,255,0.78); background:linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.42)); z-index:5; }
+
+    /* fade-in */
+    .fade-in{ opacity:0; transform: translateY(18px); transition: all .7s ease; }
+    .fade-in.visible{ opacity:1; transform: translateY(0); }
+
+    /* responsive */
+    @media (max-width:980px){ .cards{ grid-template-columns:1fr; } .brand img{ width:140px; height:140px; transform:translateY(-18px);} }
+    @media (max-width:480px){ header{ height:86px } main{ padding-top: calc(86px + 18px) } .nav-links{ display:none } .nav-cta{ display:none } }
+    .brand-center {
+  text-align: center;
+  margin-top: calc(var(--nav-height) + 20px);
+  margin-bottom: 20px;
+  z-index: 5;
+  position: relative;
+}
+
+.brand-center img {
+  width: 220px;   /* was 180px */
+  height: 220px;  /* was 180px */
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 0 45px rgba(0,230,255,0.3);
+  border: 2px solid rgba(255,255,255,0.05);
+}
+
+.brand-center h1 {
+  margin-top: 16px;
+  font-size: clamp(20px, 5vw, 40px); /* auto-scales between 28px and 46px */
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  text-shadow: 0 8px 25px rgba(0,230,255,0.4);
+}
+
+
+
+  </style>
+
+  <!-- Vanta dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+</head>
+<body>
+
+  <!-- VANTA + overlay -->
+  <div id="vanta-bg"></div>
+  <div class="overlay"></div>
+
+  <!-- NAVBAR with centered brand -->
+  <header>
+    <div class="nav-inner" role="navigation" aria-label="Main nav">
+      <div style="width:220px"></div> <!-- left spacer -->
+      <div class="brand" aria-hidden="false">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:16px;">
+        <nav class="nav-links" aria-label="top links">
+          <a href="#hero">Home</a>
+          <a href="#about">About</a>
+          <a href="#broker">Recommended Broker</a>
+          <a href="#testimonials">Testimonials</a>
+          <a href="#contact">Contact</a>
+        </nav>
+        <div class="nav-cta">
+          <a href="https://one.exnessonelink.com/boarding/sign-up/a/c_pay9mgmob0" target="_blank" rel="noopener noreferrer">Start Trading</a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- BRAND LOGO SECTION -->
+<section class="brand-center">
+  <img src="logo.jpg" alt="Smart Trading With Tony Logo">
+  <h1>Smart Trading With Tony</h1>
+</section>
+
+
+  <main>
+    <!-- HERO -->
+    <section class="hero-wrap" id="hero" aria-label="hero">
+      <div class="hero-overlay" aria-hidden="true"></div>
+      <div class="hero" role="region" aria-labelledby="hero-title">
+        <h2 id="hero-title">Learn to Trade Smart — Earn Big With Forex </h2>
+        <p>Smart Trading With Tony — Learn, Trade, and Grow with Confidence.</p>
+
+        <div class="cta-row">
+          <a class="btn-primary" href="https://one.exnessonelink.com/boarding/sign-up/a/c_pay9mgmob0" target="_blank" rel="noopener noreferrer">Start Trading with Our Recommended Broker</a>
+          <a class="btn-secondary" href="#about">Explore Free Training</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="content-block fade-in" aria-labelledby="about-title">
+      <h3 id="about-title">About Smart Trading With Tony</h3>
+      <p>
+        Smart Trading With Tony is dedicated to helping aspiring traders master forex the smart way. We focus on teaching proven strategies,
+        risk management, and the right trading mindset so beginners can move from confusion to consistent, disciplined trading.
+      </p>
+    </section>
+
+    <!-- BROKER -->
+    <section id="broker" class="content-block fade-in" aria-labelledby="broker-title">
+      <h3 id="broker-title">Our Recommended Broker</h3>
+      <p>
+        We recommend a reliable broker for fast execution and straightforward withdrawals. Many of our students use this platform to start and scale.
+      </p>
+
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+        <a class="btn-primary" href="https://one.exnessonelink.com/boarding/sign-up/a/c_pay9mgmob0" target="_blank" rel="noopener noreferrer">Open Account — Exness</a>
+        <a class="btn-secondary" href="#contact">Ask About Broker</a>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section id="testimonials" class="content-block fade-in" aria-labelledby="stories-title">
+      <h3 id="stories-title">Success Stories</h3>
+      <p>Real traders, real results — testimonials from students who followed the process.</p>
+
+      <div class="cards" style="margin-top:14px;">
+        <div class="card">
+          <strong>Michael O.</strong>
+          <p style="margin-top:10px">"I started learning from Smart Trading With Tony two months ago, and I’ve already seen progress in my trading journey. Highly recommend!"</p>
+        </div>
+        <div class="card">
+          <strong>Jennifer A.</strong>
+          <p style="margin-top:10px">"The lessons are clear and practical. I now understand forex better than ever before!"</p>
+        </div>
+        <div class="card">
+          <strong>David E.</strong>
+          <p style="margin-top:10px">"Tony’s guidance opened my eyes to real forex strategies that actually work."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="content-block fade-in" aria-labelledby="contact-title">
+      <h3 id="contact-title">Contact & Join the Community</h3>
+      <p>Join our Telegram group for updates, support, and trade ideas. We're here to help beginners grow into confident forex traders.</p>
+
+      <div class="contact-grid">
+        <div class="contact-card">
+          <strong>WhatsApp</strong><br>
+          <a href="https://t.me/TonySignalAndStrategyRoom" target="_blank" rel="noopener noreferrer">+234 911 290 3153</a>
+        </div>
+
+        <div class="contact-card">
+          <strong>Facebook</strong><br>
+          Anthony Imohabasi Okon
+        </div>
+
+        <div class="contact-card">
+          <strong>Instagram</strong><br>
+          @SmartTradingWithTony
+        </div>
+      </div>
+
+      <div style="margin-top:18px;display:flex;gap:12px;justify-content:center">
+        <a class="btn-primary" href="https://t.me/TonySignalAndStrategyRoom" target="_blank" rel="noopener noreferrer">Join Our Community</a>
+        <a class="btn-secondary" href="mailto:hello@smarttradingwithtony.com">Send Email</a>
+      </div>
+    </section>
+
+    <footer>
+      <div>© 2025 Smart Trading With Tony — All Rights Reserved</div>
+      <div style="margin-top:8px;color:rgba(255,255,255,0.75);font-size:0.95rem;">
+        Facebook: Anthony Imohabasi Okon &nbsp; | &nbsp; Instagram: Anthony Imohabasi Okon &nbsp; | &nbsp; WhatsApp: 09112903153
+      </div>
+    </footer>
+  </main>
+
+  <!-- VANTA init + reveal observer -->
+  <script>
+    // Initialize Vanta WAVES with brightened highlights for readability
+    let vanta;
+    window.addEventListener('load', function(){
+      try {
+        vanta = VANTA.WAVES({
+          el: "#vanta-bg",
+          color: 0x012b46,       // deep navy base
+          shininess: 60.00,
+          waveHeight: 22.00,
+          waveSpeed: 0.9,
+          zoom: 1.05,
+          scale:1.0,
+          colorAlt: 0x00e6ff,    // electric cyan highlights
+          THREE: THREE
+        });
+      } catch(e){
+        console.error("Vanta init failed:", e);
+      }
+    });
+
+    // IntersectionObserver reveal
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach(en=>{
+        if(en.isIntersecting) en.target.classList.add('visible');
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+
+    // Smooth anchor scroll offset so header doesn't overlap
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', function(e){
+        const id = this.getAttribute('href').slice(1);
+        if(!id) return;
+        const el = document.getElementById(id);
+        if(!el) return;
+        e.preventDefault();
+        const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 100;
+        const top = el.getBoundingClientRect().top + window.scrollY - navH - 12;
+        window.scrollTo({ top, behavior: 'smooth' });
+      });
+    });
+
+    // Clean up Vanta when leaving page
+    window.addEventListener('beforeunload', () => { if(vanta && typeof vanta.destroy === 'function') vanta.destroy(); });
+  </script>
+
+  <!-- Vanta libs loaded last -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+</body>
+</html>
